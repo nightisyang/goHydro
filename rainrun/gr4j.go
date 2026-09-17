@@ -147,6 +147,9 @@ func (m *GR4J) updateUH1(pr float64) float64 {
 	return q
 }
 func (m *GR4J) updateUH2(pr float64) float64 {
+	if len(m.cv2) == 0 {
+		return pr
+	}
 	q := m.uh2[0]*pr + m.cv2[0]
 	n := len(m.cv2) - 1
 	for i := 0; i < n; i++ {
