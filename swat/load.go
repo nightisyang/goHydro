@@ -20,7 +20,7 @@ type lhru struct {
 // Load a set of .csv files to build a SWAT model structure
 func Load(fbsn, fhru, frte, ftopo string) (WaterShed, []int) {
 
-	ibsn, err := mmio.ReadCSV(fbsn) // SWSID,SUBKM,SLSUBBSN,CHL,CHS,CHN,SURLAG,GWDELAY,ALPHABF
+	ibsn, err := mmio.ReadCSV(fbsn, 1) // SWSID,SUBKM,SLSUBBSN,CHL,CHS,CHN,SURLAG,GWDELAY,ALPHABF
 	if err != nil {
 		log.Fatalf("main: Error reading %s: %v\n", fbsn, err)
 	}
@@ -40,7 +40,7 @@ func Load(fbsn, fhru, frte, ftopo string) (WaterShed, []int) {
 	}
 	fmt.Printf("%d sub-basins read\n", len(ibsn))
 
-	irte, err := mmio.ReadCSV(frte) // SWSID,CHL,CHS,CHW,CHD,CHN
+	irte, err := mmio.ReadCSV(frte, 1) // SWSID,CHL,CHS,CHW,CHD,CHN
 	if err != nil {
 		log.Fatalf("main: Error reading %s: %v\n", frte, err)
 	}
@@ -57,7 +57,7 @@ func Load(fbsn, fhru, frte, ftopo string) (WaterShed, []int) {
 	}
 	fmt.Printf("%d channels read\n", len(irte))
 
-	ihru, err := mmio.ReadCSV(fhru) // SWSID,HRUFR,HRUSLP,OVN,CN2,CV,CLAY,SOLBD,SOLAWC,SOLK
+	ihru, err := mmio.ReadCSV(fhru, 1) // SWSID,HRUFR,HRUSLP,OVN,CN2,CV,CLAY,SOLBD,SOLAWC,SOLK
 	if err != nil {
 		log.Fatalf("main: Error reading %s: %v\n", fhru, err)
 	}
