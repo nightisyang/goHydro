@@ -18,7 +18,9 @@ func (t *TEM) FillDepressions(gd *grid.Definition, fixflats bool, fprfx string) 
 	pq := mmaths.NewPriorityQueue()
 	zs := make(map[int]float64)
 	bufs := gd.Buffers(false, true)
-	for _, c := range t.Outlets() {
+	// Every open boundary must seed the flood, including cells whose original
+	// slope points into a depression. Existing flow outlets alone omit these.
+	for c := range t.TEC {
 		if _, ok := bufs[c]; !ok {
 			panic("FillDepressions err2.1")
 		}
