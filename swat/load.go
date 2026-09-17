@@ -57,7 +57,7 @@ func Load(fbsn, fhru, frte, ftopo string) (WaterShed, []int) {
 	}
 	fmt.Printf("%d channels read\n", len(irte))
 
-	ihru, err := mmio.ReadCSV(fhru, 1) // SWSID,HRUFR,HRUSLP,OVN,CN2,CV,CLAY,SOLBD,SOLAWC,SOLK
+	ihru, err := mmio.ReadCSV(fhru, 1) // SWSID,HRUFR,HRUSLP,OVN,CN2,CV,ESCO,CLAY,SOLBD,SOLAWC,SOLK
 	if err != nil {
 		log.Fatalf("main: Error reading %s: %v\n", fhru, err)
 	}

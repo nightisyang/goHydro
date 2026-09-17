@@ -1,5 +1,9 @@
 # goHydro
 
+This is a maintenance fork of [maseology/goHydro](https://github.com/maseology/goHydro).
+See the [maintenance notes](docs/maintenance.md) for tested corrections,
+reproducible checks, units, and unresolved limitations.
+
 A suite of hydrological tools and [structs](https://go.dev/tour/moretypes/2) used with numerical modelling
 
 ## Includes:
