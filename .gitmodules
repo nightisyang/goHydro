@@ -1,0 +1,3 @@
+[submodule "goHGS"]
+	path = goHGS
+	url = https://github.com/maseology/goHGS.git

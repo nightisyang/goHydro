@@ -11,7 +11,7 @@ particular application or calibrated against observations.
 
 | Area | Correction | Regression evidence |
 |---|---|---|
-| Build | Pin dependencies; adapt `SortMapInt` and three CSV-reader calls to their current signatures | Entire root module compiles; real SWAT load fixture preserves one header and both data rows |
+| Build | Pin dependencies; adapt `SortMapInt` and three CSV-reader calls; restore the missing URL for the existing `goHGS` gitlink | Entire root module compiles; real SWAT load fixture preserves one header and both data rows; Git can resolve the submodule mapping |
 | Terrain filling | Seed every open boundary, including edges initially sloping into a basin | A hand-derived 5 m spill-level fixture fails before the correction |
 | Flat terrain | Order initial queue entries, use all eligible fallback exits, and apply final repairs after evaluating them | Repeated elevations, directions and upstream counts; independent fill and graph checks |
 | SCS curve number | Correct dry coefficient `0.281` to `2.281`; handle zero rainfall before division | Literal dry/normal/wet amounts, CN boundaries and an independent retention sweep |
@@ -41,6 +41,10 @@ subdirectories remain independent modules; root builds consume the explicitly
 pinned upstream versions of those modules. No source changes are carried in
 those submodules by this series. Packages without tests receive compilation
 and vet checks, not numerical certification.
+
+The existing `goHGS` git submodule has its missing `.gitmodules` mapping
+restored, with its original commit unchanged. CI does not initialize that
+separate repository; it is not part of the root-module validation.
 
 The regression suite requires no DEM download, Python, Fortran, external
 service, or private evaluation workspace. It includes:
