@@ -1,11 +1,108 @@
 package tem
 
 import (
+	"encoding/json"
 	"math"
+	"os"
+	"reflect"
 	"testing"
 
 	"github.com/maseology/goHydro/grid"
 )
+
+type fillTestFixture struct {
+	Name       string    `json:"name"`
+	Rows       int       `json:"rows"`
+	Cols       int       `json:"cols"`
+	Elevations []float64 `json:"elevations"`
+}
+
+// Eight repeats catch map-order changes in flat membership and open-edge exit
+// selection. The fixtures include depressions, flats and missing-data holes.
+func TestFillDepressionsReferenceAndRepeatability(t *testing.T) {
+	data, err := os.ReadFile("testdata/fill-fixtures.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fixtures []fillTestFixture
+	if err := json.Unmarshal(data, &fixtures); err != nil {
+		t.Fatal(err)
+	}
+	fixtures = append(fixtures, fillTestFixture{Name: "flat-zero", Rows: 9, Cols: 9, Elevations: make([]float64, 81)})
+	twoOutlets := make([]float64, 11*13)
+	for cell := range twoOutlets {
+		r, c := cell/13, cell%13
+		twoOutlets[cell] = 10
+		if r > 0 && r < 10 && c > 0 && c < 12 {
+			twoOutlets[cell] = 5
+		}
+	}
+	twoOutlets[5*13], twoOutlets[5*13+12] = 4, 4
+	fixtures = append(fixtures, fillTestFixture{Name: "two-outlets", Rows: 11, Cols: 13, Elevations: twoOutlets})
+	for _, fixture := range fixtures {
+		if fixture.Rows*fixture.Cols != len(fixture.Elevations) {
+			t.Fatalf("invalid dimensions for %s", fixture.Name)
+		}
+		want := referenceTestFill(fixture.Rows, fixture.Cols, fixture.Elevations)
+		for _, fix := range []bool{false, true} {
+			t.Run(fixture.Name+"/"+flatModeName(fix), func(t *testing.T) {
+				var firstHeights map[int]float64
+				var firstDirections, firstCounts map[int]int
+				for repeat := 0; repeat < 8; repeat++ {
+					model := filledTestTerrain(t, fixture.Rows, fixture.Cols, fixture.Elevations, fix)
+					heights := make(map[int]float64, len(model.TEC))
+					for cell, value := range model.TEC {
+						heights[cell] = value.Z
+						if math.IsNaN(value.Z) || math.IsInf(value.Z, 0) || math.Abs(value.Z-want[cell]) > 1e-8 {
+							t.Fatalf("repeat %d cell %d: filled %.12g, independent minimum spill level %.12g", repeat, cell, value.Z, want[cell])
+						}
+					}
+					checkTestDrainage(t, model, fixture.Rows, fixture.Cols, fixture.Elevations)
+					directions, counts := model.Downslopes(), model.ContributingCellCounts()
+					if repeat == 0 {
+						firstHeights, firstDirections, firstCounts = heights, directions, counts
+					} else if !reflect.DeepEqual(firstHeights, heights) || !reflect.DeepEqual(firstDirections, directions) || !reflect.DeepEqual(firstCounts, counts) {
+						t.Fatalf("identical DEM changed elevations, routes, or upstream counts on repeat %d", repeat)
+					}
+				}
+			})
+		}
+	}
+}
+
+// An independent minimax-path relaxation, without a priority queue or artificial
+// gradients: find each cell's lowest possible spill level to any open edge.
+func referenceTestFill(rows, cols int, z []float64) []float64 {
+	filled := make([]float64, len(z))
+	for cell, height := range z {
+		filled[cell] = math.Inf(1)
+		if height == -9999 || testOpenBoundary(cell, rows, cols, z) {
+			filled[cell] = height
+		}
+	}
+	for pass := 0; pass < len(z); pass++ {
+		changed := false
+		for cell, height := range z {
+			if height == -9999 {
+				continue
+			}
+			for _, n := range testNeighbours(cell, rows, cols) {
+				if z[n] == -9999 {
+					continue
+				}
+				candidate := math.Max(height, filled[n])
+				if candidate < filled[cell] {
+					filled[cell] = candidate
+					changed = true
+				}
+			}
+		}
+		if !changed {
+			break
+		}
+	}
+	return filled
+}
 
 // Every edge of this basin initially slopes inward, including its 5 m spill
 // point. Seeding only existing flow outlets leaves the 1 m floor unfilled.

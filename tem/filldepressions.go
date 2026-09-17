@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"os"
+	"sort"
 
 	"github.com/maseology/goHydro/grid"
 	"github.com/maseology/mmaths"
@@ -20,7 +21,12 @@ func (t *TEM) FillDepressions(gd *grid.Definition, fixflats bool, fprfx string) 
 	bufs := gd.Buffers(false, true)
 	// Every open boundary must seed the flood, including cells whose original
 	// slope points into a depression. Existing flow outlets alone omit these.
+	seeds := make([]int, 0, len(t.TEC))
 	for c := range t.TEC {
+		seeds = append(seeds, c)
+	}
+	sort.Ints(seeds)
+	for _, c := range seeds {
 		if _, ok := bufs[c]; !ok {
 			panic("FillDepressions err2.1")
 		}
@@ -179,17 +185,19 @@ func fixflatregions(gd *grid.Definition, zs, flat map[int]float64, bufs map[int]
 				}
 			}
 			if len(bouts) == 0 {
-				func() {
-					for _, c := range aflat {
-						for _, bc := range bufs[c] {
-							if bc < 0 {
-								aouts[c]++ // flat region draining to farfield
-								return
-							}
+				// Treat every open boundary cell as an eligible outlet. Choosing
+				// only the first map-derived cell makes drainage arbitrary.
+				for _, c := range aflat {
+					for _, bc := range bufs[c] {
+						if bc < 0 {
+							aouts[c]++
+							break
 						}
 					}
-					panic("filldrepressions flat regaion farfield expected")
-				}()
+				}
+				if len(aouts) == 0 {
+					panic("filldepressions flat region farfield expected")
+				}
 			} else {
 				for bout := range bouts {
 					for _, bc := range bufs[bout] {
@@ -295,6 +303,8 @@ func fixflatregions(gd *grid.Definition, zs, flat map[int]float64, bufs map[int]
 	for c, v := range olev3 {
 		zs[c] += float64(v) * small
 	}
+	// Decide all repairs before applying them so neighbours see the same heights.
+	raise := make([]int, 0)
 	for c := range iflat {
 		func() { // last fix for "rather exceptional situations" (pg.208)
 			for _, bc := range bufs[c] {
@@ -302,8 +312,12 @@ func fixflatregions(gd *grid.Definition, zs, flat map[int]float64, bufs map[int]
 					return
 				}
 			}
-			zs[c] += small
+			raise = append(raise, c)
 		}()
+	}
+
+	for _, c := range raise {
+		zs[c] += small
 	}
 
 	// Print outputs for testing
