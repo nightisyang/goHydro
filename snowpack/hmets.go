@@ -25,5 +25,4 @@ func NewHMETS(ddfmin, ddfplus, tbm, kcum, fcmin, fcplus, ccum, tbf, kf, fe float
 
 func (d *HMETS) Update(r, s, t float64) (melt, throughfall float64) {
 	panic("todo")
-	return -9999., -9999.
 }

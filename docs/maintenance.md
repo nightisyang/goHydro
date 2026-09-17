@@ -45,6 +45,9 @@ and vet checks, not numerical certification.
 The existing `goHGS` git submodule has its missing `.gitmodules` mapping
 restored, with its original commit unchanged. CI does not initialize that
 separate repository; it is not part of the root-module validation.
+An unreachable return after the existing `snowpack.HMETS.Update` panic was
+removed so whole-module static analysis can run. The stub still panics;
+this cleanup does not implement or validate that snow model.
 
 The regression suite requires no DEM download, Python, Fortran, external
 service, or private evaluation workspace. It includes:
@@ -104,6 +107,7 @@ equations; they do not validate the constructor's initialization optimizer.
 ## Remaining limitations
 
 - `PenmanMonteith` is unfinished and exits the process even for valid inputs.
+- `snowpack.HMETS.Update` remains an unfinished stub that panics.
 - `SineCurvePET` allocates approximately half the supplied annual total and
   uses a fixed seasonal shape.
 - Penman's air-density approximation does not account for pressure; its wind
