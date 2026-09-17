@@ -9,6 +9,8 @@ import (
 type TEM struct {
 	TEC  map[int]TEC
 	USlp map[int][]int
+
+	neighbourDistance func(from, to int) float64
 }
 
 // NumCells number of cells that make up the TEM
@@ -16,7 +18,9 @@ func (t *TEM) NumCells() int {
 	return len(t.TEC)
 }
 
-// SaveGob TEM to gob
+// SaveGob saves the TEM graph and cells to gob. A caller-supplied neighbour
+// distance callback is not serialized; reconstruct a distance-aware TEM before
+// rerouting a saved model that needs physical neighbour distances.
 func (t *TEM) SaveGob(fp string) error {
 	f, err := os.Create(fp)
 	if err != nil {

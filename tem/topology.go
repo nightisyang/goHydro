@@ -85,9 +85,9 @@ func (t *TEM) SubSet(fromid int) (*TEM, []int) {
 		uss[c] = t.USlp[c]
 	}
 	if len(uids) == 1 && uids[0] < 0 {
-		return &TEM{TEC: tss, USlp: uss}, nil
+		return &TEM{TEC: tss, USlp: uss, neighbourDistance: t.neighbourDistance}, nil
 	}
-	return &TEM{TEC: tss, USlp: uss}, uids
+	return &TEM{TEC: tss, USlp: uss, neighbourDistance: t.neighbourDistance}, uids
 }
 
 func (t *TEM) Downslopes() map[int]int {

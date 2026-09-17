@@ -10,7 +10,7 @@ import "github.com/maseology/goHydro/grid"
 
 // NumCells number of cells that make up the TEM
 func (t *TEM) ClipToActives(gd *grid.Definition) TEM {
-	o := TEM{make(map[int]TEC), make(map[int][]int)}
+	o := TEM{TEC: make(map[int]TEC), USlp: make(map[int][]int), neighbourDistance: t.neighbourDistance}
 	for c, tec := range t.TEC {
 		if gd.IsActive(c) {
 			o.TEC[c] = tec

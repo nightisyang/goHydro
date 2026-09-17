@@ -14,6 +14,7 @@ particular application or calibrated against observations.
 | Build | Pin dependencies; adapt `SortMapInt` and three CSV-reader calls; restore the missing URL for the existing `goHGS` gitlink | Entire root module compiles; real SWAT load fixture preserves one header and both data rows; Git can resolve the submodule mapping |
 | Terrain filling | Seed every open boundary, including edges initially sloping into a basin | A hand-derived 5 m spill-level fixture fails before the correction |
 | Flat terrain | Order initial queue entries, use all eligible fallback exits, and apply final repairs after evaluating them | Repeated elevations, directions and upstream counts; independent fill and graph checks |
+| D8 distances | Add an opt-in neighbour-distance callback for rectangular or geographic grids | Hand-derived cardinal/diagonal route changes, invalid-distance rejection, and post-fill/copy repeatability |
 | SCS curve number | Correct dry coefficient `0.281` to `2.281`; handle zero rainfall before division | Literal dry/normal/wet amounts, CN boundaries and an independent retention sweep |
 | Oudin PET | Remove an extra factor of 1,000; document extraterrestrial radiation | Independent daily-depth values and pinned airGR comparisons |
 | GR4J | Handle the single-bin second hydrograph at `X4=0.5` days | Real constructor/update, impulse conservation and 21 airGR reference scenarios |
@@ -80,6 +81,27 @@ resolve flats; filled differences are not automatically observed pond depths.
 Repeatability is verified on the fixtures, not proved for all possible DEMs.
 Equal-sized boundary components and one-cell flat handling remain targets for
 further adversarial evaluation.
+
+`tem.NewFromRealWithDistances(r grid.Real, distance func(from, to int) float64)`
+returns `(*tem.TEM, error)` and uses caller-supplied horizontal distances for
+D8 routing, including routing rebuilt by `FillDepressions`. All directed
+active-neighbour distances are checked for finite positive values before
+routing; use the same length unit as elevation. The callback must be pure and
+stable for the model's lifetime. No per-edge distance cache is allocated;
+geographic-grid callers can precompute row spacing while retaining their native
+cells and georeferencing. Nil preserves `NewFromReal`'s square-cell routing.
+
+This callback affects D8 routing only. `TEC.G`/`TEC.A` still use the existing
+square-grid slope/aspect calculation, and depression filling/flat correction
+are unchanged. `ClipToActives` and `SubSet` retain the callback and original
+cell IDs. Gob serialization retains the graph but cannot retain a function;
+reconstruct with the distance-aware constructor before rerouting saved terrain.
+Successful legacy `(*TEM).New(path)` loads clear any previous callback, so
+reusing a model cannot apply the old grid's distances to newly loaded terrain.
+Returned load errors leave the callback unchanged.
+Existing constructors and keyed `TEM` literals remain source-compatible; any
+external positional `TEM` literal must become keyed because `TEM` now retains
+a private callback.
 
 **SCS retention:** `Scscn` accepts metres of cumulative event rainfall
 **after initial abstraction**, a normal-condition curve number, and AMC

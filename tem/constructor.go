@@ -13,7 +13,8 @@ func NewTEM(fp string) (*TEM, error) {
 	return &t, err
 }
 
-// New constructor
+// New loads a legacy TEM file. A successful load clears any previous
+// neighbour-distance callback; later routing uses legacy square-cell distances.
 func (t *TEM) New(fp string) error {
 	var err error
 	var ds map[int]int // down-slope IDs = map[from]to
@@ -34,6 +35,7 @@ func (t *TEM) New(fp string) error {
 
 	t.checkVals()
 	t.buildUpslopes(ds)
+	t.neighbourDistance = nil
 	return nil
 }
 

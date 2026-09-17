@@ -14,7 +14,11 @@ func (t *TEM) buildDsFromNeighbours(bufs map[int][]int) map[int]int {
 					continue
 				}
 				if bt, ok := t.TEC[bc]; ok {
-					grad := (tt.Z - bt.Z) / f[i]
+					distance := f[i]
+					if t.neighbourDistance != nil {
+						distance = t.neighbourDistance(c, bc)
+					}
+					grad := (tt.Z - bt.Z) / distance
 					if grad < 0 {
 						continue
 					}
